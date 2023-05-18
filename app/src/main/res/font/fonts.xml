@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<font-family name="StarJedi"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <font
+        android:font="@font/proxima_nova_font"
+        android:fontWeight="400"
+        android:fontStyle="normal" />
+</font-family>
