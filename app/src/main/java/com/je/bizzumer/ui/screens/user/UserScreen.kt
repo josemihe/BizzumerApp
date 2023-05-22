@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,6 +35,8 @@ fun UserMainScreen(navController: NavController) {
     val apiService = ApiService.create()
     val token = getTokenFromSharedPreferences(LocalContext.current).toString()
     val context = LocalContext.current
+    val isDarkTheme = isSystemInDarkTheme()
+    val titleColor = if (isDarkTheme) Color.Black else Color.White
 
     // Hold the state of the groups data
     val groupsState = remember { mutableStateOf(emptyList<Group>()) }
@@ -65,7 +68,7 @@ fun UserMainScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(titleColor)
     ) {
         LazyColumn {
             item {
@@ -109,13 +112,15 @@ fun UserMainScreen(navController: NavController) {
 @SuppressLint("SimpleDateFormat")
 @Composable
 private fun GroupCard(group: Group, navController: NavController) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val titleColor = if (isDarkTheme) Color.Gray else Color.LightGray
     Card(
         modifier = Modifier
             .padding(16.dp)
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium),
         elevation = 8.dp,
-        backgroundColor = Color.LightGray,
+        backgroundColor = titleColor,
     ) {
         val dateFormat = SimpleDateFormat("dd-MM-yyyy")
         val formattedDate = dateFormat.format(group.date)

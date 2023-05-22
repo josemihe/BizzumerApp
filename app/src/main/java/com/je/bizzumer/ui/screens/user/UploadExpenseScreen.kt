@@ -1,5 +1,4 @@
 package com.je.bizzumer.ui.screens.user
-
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -31,6 +30,7 @@ fun UploadExpenseScreen(navController: NavController){
     val context = LocalContext.current
     val amount = remember { mutableStateOf(TextFieldValue()) }
     val description = remember { mutableStateOf(TextFieldValue()) }
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -71,32 +71,32 @@ fun UploadExpenseScreen(navController: NavController){
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
                     val apiService = ApiService.create()
-                    val call = apiService.uploadExpense(token,groupId.toString().toInt(),amount.value.text.toDouble(),description.value.text)
+                    val call = apiService.uploadExpense(
+                        token,
+                        groupId.toString().toInt(),
+                        amount.value.text.toDouble(),
+                        description.value.text
+                    )
                     call.enqueue(object : Callback<MessageResponse> {
                         override fun onResponse(
                             call: Call<MessageResponse>,
                             response: Response<MessageResponse>
                         ) {
                             if (response.isSuccessful) {
-                                val message = response.body()?.message
-                                val toast = Toast.makeText(context, message, Toast.LENGTH_SHORT)
-                                toast.show()
                                 navController.popBackStack()
+                            } else {
+                                    val toast = Toast.makeText(context,"Couldn't upload the expense",Toast.LENGTH_SHORT)
+                                    toast.show()
+                                }
                             }
-                            else{
-                                val toast = Toast.makeText(context, "Couldn't upload the expense", Toast.LENGTH_SHORT)
-                                toast.show()
-                            }
-                        }
-
                         override fun onFailure(call: Call<MessageResponse>, t: Throwable) {
                             val toast = Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
                             toast.show()
                         }
-
                     })
                 },
                 modifier = Modifier

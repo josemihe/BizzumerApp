@@ -9,7 +9,7 @@ data class Group(
     val amountToPayByUser: Double,
     val comment: String?,
     val accessCode: String?,
-    val ownerId: Long,
+    val ownerId: Int,
     val status: String,
     val groupOwner: User,
     val participants: List<User>,

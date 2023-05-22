@@ -136,7 +136,6 @@ private fun performLogin(context: Context, email: String, password: String,navCo
             val token = loginResponse?.token
             if (token != null) {
                 com.je.bizzumer.io.preferences_management.saveToken(token,context)
-                Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
                 navController.navigate(AppScreens.UserMainScreen.route)
             }
             else {

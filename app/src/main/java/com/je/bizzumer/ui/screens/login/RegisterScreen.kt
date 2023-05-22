@@ -53,7 +53,7 @@ fun RegisterScreen(navController: NavController) {
             OutlinedTextField(
                 value = nameState.value,
                 onValueChange = { nameState.value = it },
-                label = { Text(text = "Full Name", style = MaterialTheme.typography.h6) },
+                label = { Text(text = "Username", style = MaterialTheme.typography.h6) },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text
                 ),
@@ -145,7 +145,6 @@ fun performRegister(context: Context, name: String, email: String, password: Str
             val token = loginResponse?.token
             if (token != null) {
                 saveToken(token,context)
-                Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
                 navController.navigate(AppScreens.UserMainScreen.route)
             }
             else {

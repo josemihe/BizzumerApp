@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,6 +37,8 @@ fun GroupScreen(navController: NavController){
     }
     val context = LocalContext.current
     val groupState = remember { mutableStateOf(emptyList<Group>()) }
+    val isDarkTheme = isSystemInDarkTheme()
+    val titleColor = if (isDarkTheme) Color.Black else Color.White
     LaunchedEffect(key1 = token) {
         val call = apiService.getGroup(token,groupId.toString())
         call.enqueue(
@@ -61,7 +64,7 @@ fun GroupScreen(navController: NavController){
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(titleColor)
     ) {
         LazyColumn {
             items(groupState.value) { group ->
@@ -147,19 +150,22 @@ fun GroupScreen(navController: NavController){
 @SuppressLint("SimpleDateFormat")
 @Composable
 private fun SingleGroupCard(group: Group, navController: NavController) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val titleColor = if (isDarkTheme) Color.Black else Color.White
     Card(
         modifier = Modifier
             .padding(16.dp)
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium),
         elevation = 8.dp,
-        backgroundColor = Color.White,
+        backgroundColor = titleColor,
     ) {
         val dateFormat = SimpleDateFormat("dd-MM-yyyy")
         val formattedDate = dateFormat.format(group.date)
         val context = LocalContext.current
         val groupId = group.id
         val transactionsState = remember { mutableStateOf<List<Transaction>>(emptyList()) }
+
 
         LaunchedEffect(groupId) {
             getTransactions(groupId, navController, context) { expenses ->
@@ -246,42 +252,36 @@ private fun SingleGroupCard(group: Group, navController: NavController) {
                         text = participant.name,
                         style = MaterialTheme.typography.h6
                     )
-                    Button(
-                        onClick = {
-                            val apiService = ApiService.create()
-                            val token = getTokenFromSharedPreferences(context)
-                            val call = apiService.removeParticipant(token.toString(),group.id,participant.id)
-                            call.enqueue(object : Callback<MessageResponse> {
-                                override fun onResponse(call: Call<MessageResponse>, response: Response<MessageResponse>) {
-                                    if (response.isSuccessful) {
+                    if(participant.id != group.ownerId){
+                        Button(
+                            onClick = {
+                                val apiService = ApiService.create()
+                                val token = getTokenFromSharedPreferences(context)
+                                val call = apiService.removeParticipant(token.toString(),group.id,participant.id)
+                                call.enqueue(object : Callback<MessageResponse> {
+                                    override fun onResponse(call: Call<MessageResponse>, response: Response<MessageResponse>) {
                                         val message = response.body()?.message
-                                        if(message.toString() == "Participant successfully removed"){
-                                            val toast = Toast.makeText(context, message, Toast.LENGTH_SHORT)
+                                        if (response.isSuccessful) {
+                                            if(message.toString() == "Participant successfully removed"){
+                                                participantsState.remove(participant)
+                                            }
+                                        } else {
+                                            val toast = Toast.makeText(context, "Error", Toast.LENGTH_SHORT)
                                             toast.show()
-                                            participantsState.remove(participant)
                                         }
-                                        else{
-                                            val toast = Toast.makeText(context, "The admin can't be removed", Toast.LENGTH_SHORT)
-                                            toast.show()
-                                        }
-
-                                    } else {
-                                        val toast = Toast.makeText(context, "Only the admin can remove other participants", Toast.LENGTH_SHORT)
+                                    }
+                                    override fun onFailure(call: Call<MessageResponse>, t: Throwable) {
+                                        val toast = Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
                                         toast.show()
                                     }
-                                }
-
-                                override fun onFailure(call: Call<MessageResponse>, t: Throwable) {
-                                    val toast = Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
-                                    toast.show()
-                                }
-                            })
-                        },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .clip(MaterialTheme.shapes.medium)) {
-                        Text(text = "Remove", color = Color.White)
+                                })
+                            },
+                            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .clip(MaterialTheme.shapes.medium)) {
+                            Text(text = "Remove", color = Color.White)
+                        }
                     }
                 }
             }
@@ -303,8 +303,7 @@ private fun calculateExpenses(groupId: Int, navController: NavController, contex
         }
 
         override fun onFailure(call: Call<ExpenseCalculationResult>, t: Throwable) {
-            val toast = Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
-            toast.show()
+            callback(emptyList())
         }
     })
 }

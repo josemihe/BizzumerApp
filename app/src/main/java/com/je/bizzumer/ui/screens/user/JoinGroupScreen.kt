@@ -64,9 +64,6 @@ fun JoinGroupScreen(navController: NavController) {
                             response: Response<MessageResponse>
                         ) {
                             if (response.isSuccessful) {
-                                val message = response.body()?.message
-                                val toast = Toast.makeText(context, message, Toast.LENGTH_SHORT)
-                                toast.show()
                                 navController.navigate(AppScreens.UserMainScreen.route)
                             }
                             else{

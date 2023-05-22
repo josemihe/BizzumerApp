@@ -6,6 +6,7 @@ data class Expense(
     val id: Int,
     val user_id: Int,
     val group_id: Int,
+    val user_name: String,
     val amount: Double,
     val created_at: Date,
     val description: String?,

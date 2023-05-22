@@ -1,6 +1,8 @@
 package com.je.bizzumer.io
 
 import com.je.bizzumer.io.response.*
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -26,20 +28,20 @@ interface ApiService {
     @DELETE("/api/logout")
     fun postLogout(@Header("Authorization") token: String): Call<MessageResponse>
 
-    @GET("/api/v1/groups")
+    @GET("/api/v2/groups")
     fun getAllGroups(@Header("Authorization") token: String): Call<GroupsResponse>
 
-    @GET("/api/v1/group")
+    @GET("/api/v2/group")
     fun getGroup(@Header("Authorization") token: String, @Query(value="id") id: String): Call<GroupsResponse>
 
-    @DELETE("/api/v1/groups/participant/")
+    @DELETE("/api/v2/groups/participant/")
     fun removeParticipant(
         @Header("Authorization") token: String,
         @Query(value = "group_id") groupId: Int,
         @Query(value = "delete_id") userId: Int
     ): Call<MessageResponse>
 
-    @DELETE("/api/v1/groups/leave/")
+    @DELETE("/api/v2/groups/leave/")
     fun leaveGroup(
         @Header("Authorization") token: String,
         @Query(value = "group_id") groupId: Int,
@@ -91,8 +93,24 @@ interface ApiService {
         @Query(value= "expense_id") expenseId: Int,
     ): Call<MessageResponse>
 
+    @Multipart
+    @POST("api/v2/expense/upload-image")
+    fun uploadImage(
+        @Header("Authorization") token: String,
+        @Part("group_id") groupId: RequestBody,
+        @Part("expense_id") expenseId: RequestBody,
+        @Part image: MultipartBody.Part
+    ): Call<MessageResponse>
+
+    @GET("api/v2/expense/view-image")
+    fun viewImage(
+        @Header("Authorization") token: String,
+        @Query("group_id") groupId: Int,
+        @Query("expense_id") expenseId: Int
+    ): Call<MessageResponse>
+
     companion object Factory{
-        private const val BASE_URL = "http://10.0.2.2:8000"
+        private const val BASE_URL = "http://192.168.77.21:8000"
         fun create(): ApiService{
             val retrofit = Retrofit.Builder()
                 .baseUrl(BASE_URL)

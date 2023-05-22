@@ -1,12 +1,15 @@
 package com.je.bizzumer.ui.screens
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import android.view.Gravity
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -30,6 +33,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
 import com.je.bizzumer.io.navigation.AppNavigation
 import com.je.bizzumer.R
 import com.je.bizzumer.io.ApiService
@@ -47,9 +52,13 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+@OptIn(ExperimentalPermissionsApi::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(navController: NavController) {
+    val permissionState = rememberPermissionState(
+        permission = Manifest.permission.READ_EXTERNAL_STORAGE,
+    )
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     val hostController = navController as NavHostController
@@ -63,6 +72,13 @@ fun HomeScreen(navController: NavController) {
     val loginItems = listOf<LoginItems>(
         LoginItems.LoginItem
     )
+    LaunchedEffect(Unit) {
+        Log.d("ExpenseItem", "LaunchedEffect: Checking permission...")
+        if (!permissionState.hasPermission) {
+            permissionState.launchPermissionRequest()
+            Log.d("ExpenseItem", "Permission not granted. Requesting permission...")
+        }
+    }
     Scaffold(
         scaffoldState = scaffoldState,
         topBar = {TopBar(scope, scaffoldState, hostController)},
@@ -212,10 +228,7 @@ fun LogoutItem(
     onItemClick: (MenuItems) -> Unit
 ){
     val (isLoading) = remember { mutableStateOf(false) }
-    //val (isLogoutSuccess, setIsLogoutSuccess) = remember { mutableStateOf(false) }
-
     if (isLoading) {
-        // Show loading indicator while API call is in progress
         CircularProgressIndicator()
     } else {
         Row(
@@ -230,10 +243,7 @@ fun LogoutItem(
                 )
                 .padding(8.dp)
                 .clickable {
-                    //setIsLoading(true)
-                    performLogout(context) { //isSuccess ->
-                        //setIsLoading(false)
-                        //setIsLogoutSuccess(isSuccess)
+                    performLogout(context) {
                     }
                     onItemClick(item)
                 },
@@ -260,16 +270,14 @@ fun LoginItem(
     navController: NavController
 ){
     val (isLoading) = remember { mutableStateOf(false) }
-    //val (isLogoutSuccess, setIsLogoutSuccess) = remember { mutableStateOf(false) }
 
     if (isLoading) {
-        // Show loading indicator while API call is in progress
         CircularProgressIndicator()
     } else {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)
+                .height(90.dp)
                 .padding(12.dp)
                 .clip(RoundedCornerShape(12))
                 .background(
@@ -278,7 +286,6 @@ fun LoginItem(
                 )
                 .padding(8.dp)
                 .clickable {
-                    //setIsLoading(true)
                     navController.navigate(AppScreens.LoginScreen.route)
                 },
             verticalAlignment = Alignment.CenterVertically
@@ -418,7 +425,6 @@ private fun performLogout(context: Context, callback: (Boolean) -> Unit) {
             val logoutResponse = response.body()
             val message = logoutResponse?.message
             if(message!=null){
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 callback(true) // API call was successful
             }
             else {
@@ -446,6 +452,8 @@ fun currentRoute(navController: NavController): String? {
 
 @Composable
 fun BodyContent(navController: NavController) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val titleColor = if (isDarkTheme) Color.White else Color.Black
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -455,7 +463,7 @@ fun BodyContent(navController: NavController) {
     ) {
         Text(
             text = "Welcome to Bizzumer",
-            color = Color.Black,
+            color = titleColor,
             fontSize = 48.sp,
             fontFamily = FontFamily(Font(R.font.proxima_nova_font)),
             fontWeight = FontWeight.Bold,
@@ -463,8 +471,8 @@ fun BodyContent(navController: NavController) {
             modifier = Modifier.padding(bottom = 16.dp)
         )
         Text(
-            text = "Your app to never have to think again when splitting your expenses with others",
-            color = Color.Black,
+            text = "The app to never have to think again when splitting your expenses",
+            color = titleColor,
             fontSize = 24.sp,
             fontFamily = FontFamily(Font(R.font.proxima_nova_font)),
             textAlign = TextAlign.Center,
