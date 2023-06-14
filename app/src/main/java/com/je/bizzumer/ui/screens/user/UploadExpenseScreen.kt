@@ -70,8 +70,7 @@ fun UploadExpenseScreen(navController: NavController){
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = {
                     val apiService = ApiService.create()

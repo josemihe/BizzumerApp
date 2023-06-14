@@ -10,7 +10,6 @@ data class Group(
     val comment: String?,
     val accessCode: String?,
     val ownerId: Int,
-    val status: String,
     val groupOwner: User,
     val participants: List<User>,
     val expenses: List<Expense>

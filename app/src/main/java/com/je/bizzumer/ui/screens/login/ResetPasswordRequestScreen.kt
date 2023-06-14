@@ -1,7 +1,6 @@
 package com.je.bizzumer.ui.screens
 
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -168,27 +167,20 @@ fun changePassword(context: Context, password: String, confirmPassword: String, 
 private fun sendEmail(context: Context, email: String){
     val apiService = ApiService.create()
     val call = apiService.postResetMail(email)
-    if(email!=null){
-        call.enqueue(object: Callback<MessageResponse> {
-            override fun onResponse(call: Call<MessageResponse>, response: Response<MessageResponse>){
-                val resetRequestResponse = response.body()
-                val message = resetRequestResponse?.message
-                if (message != null) {
-                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                }
-                else{
-                    Log.e("ResetPasswordRequest", "Response body did not contain message field")
-                    Toast.makeText(context, "There was an error", Toast.LENGTH_SHORT).show()
-                }
+    call.enqueue(object: Callback<MessageResponse> {
+        override fun onResponse(call: Call<MessageResponse>, response: Response<MessageResponse>){
+            val resetRequestResponse = response.body()
+            val message = resetRequestResponse?.message
+            if (message != null) {
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
-            override fun onFailure(call: Call<MessageResponse>, t: Throwable) {
-                val toast = Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
-                toast.show()
+            else{
+                Toast.makeText(context, "There was an error", Toast.LENGTH_SHORT).show()
             }
-        })
-    }
-    else{
-        val toast = Toast.makeText(context, "You must write an email before sending the reset request", Toast.LENGTH_SHORT)
-        toast.show()
-    }
+        }
+        override fun onFailure(call: Call<MessageResponse>, t: Throwable) {
+            val toast = Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
+            toast.show()
+        }
+    })
 }

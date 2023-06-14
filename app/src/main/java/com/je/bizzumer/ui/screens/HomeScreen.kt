@@ -73,10 +73,8 @@ fun HomeScreen(navController: NavController) {
         LoginItems.LoginItem
     )
     LaunchedEffect(Unit) {
-        Log.d("ExpenseItem", "LaunchedEffect: Checking permission...")
         if (!permissionState.hasPermission) {
             permissionState.launchPermissionRequest()
-            Log.d("ExpenseItem", "Permission not granted. Requesting permission...")
         }
     }
     Scaffold(
@@ -479,7 +477,7 @@ fun BodyContent(navController: NavController) {
             modifier = Modifier.fillMaxWidth()
         )
         Image(
-            painter = painterResource(R.drawable.logo),
+            painter = painterResource(R.drawable.bizzumer),
             contentDescription = "Bizzumer Logo",
             modifier = Modifier.size(320.dp)
         )

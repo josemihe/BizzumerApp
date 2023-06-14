@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "542537713397",
+    "project_id": "bizzumer-293f4",
+    "storage_bucket": "bizzumer-293f4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:542537713397:android:359c10b1c857e820f367bc",
+        "android_client_info": {
+          "package_name": "com.je.bizzumer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "542537713397-62l1pc00o2h6efovkb1osfr63o3gi44f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUsBN527FMBepBpu1_opq8Py2lBC3UYog"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "542537713397-62l1pc00o2h6efovkb1osfr63o3gi44f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,7 +1,6 @@
 package com.je.bizzumer.ui.screens.login
 
 import android.content.Context
-import android.view.Gravity
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -25,6 +24,7 @@ import androidx.navigation.NavController
 import com.je.bizzumer.R
 import com.je.bizzumer.io.ApiService
 import com.je.bizzumer.io.navigation.AppScreens
+import com.je.bizzumer.io.preferences_management.saveToken
 import com.je.bizzumer.io.response.LoginResponse
 import retrofit2.Call
 import retrofit2.Callback
@@ -160,11 +160,3 @@ fun performRegister(context: Context, name: String, email: String, password: Str
         }
     })
 }
-
-private fun saveToken(token:String,context:Context){
-    val sharedPreferences = context.getSharedPreferences("BizzumerPreferences", Context.MODE_PRIVATE)
-    val editor = sharedPreferences.edit()
-    editor.putString("TokenKey", token)
-    editor.apply()
-}
-

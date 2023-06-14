@@ -3,7 +3,6 @@ package com.je.bizzumer.ui.screens.user
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -114,24 +113,94 @@ fun ExpenseItem(expense: Expense, navController: NavController, context: Context
     }
 }
 
-private fun deleteExpense(navController: NavController, context: Context, expenseId: Int){
+@Composable
+fun ImageOrUploadButton(groupId: Int, expenseId: Int, navController: NavController) {
+
     val apiService = ApiService.create()
+    val context = LocalContext.current
+    val imageState = remember { mutableStateOf<Bitmap?>(null) }
     val token = getTokenFromSharedPreferences(context).toString()
-    val call = apiService.deleteExpense(token,expenseId)
-    call.enqueue(object: Callback<MessageResponse>{
-        override fun onResponse(call: Call<MessageResponse>, response: Response<MessageResponse>) {
-            navController.navigate(AppScreens.ShowExpensesScreen.route) {
-                popUpTo(AppScreens.ShowExpensesScreen.route) {
-                    inclusive = true
-                }
+    var isImageExpanded by remember { mutableStateOf(false) }
+
+    val getContent = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            val filePath = getFilePathFromContentUri(uri, context)
+            if (filePath != null) {
+                uploadImage(token, groupId, expenseId, Uri.fromFile(File(filePath)), context, navController)
             }
         }
-        override fun onFailure(call: Call<MessageResponse>, t: Throwable) {
-            val toast = Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
-            toast.show()
-        }
+    }
 
-    })
+    LaunchedEffect(key1 = token, key2 = groupId, key3 = expenseId) {
+        val call = apiService.viewImage(token, groupId, expenseId)
+        call.enqueue(object : Callback<MessageResponse> {
+            override fun onResponse(call: Call<MessageResponse>, response: Response<MessageResponse>) {
+                val messageResponse = response.body()
+                val fileUrl = messageResponse?.message
+                if (!fileUrl.isNullOrEmpty()) {
+                    loadImageFromUrl(fileUrl,context) { bitmap ->
+                        imageState.value = bitmap
+                    }
+                }
+            }
+            override fun onFailure(call: Call<MessageResponse>, t: Throwable) {
+                val toast =
+                    Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
+                toast.show()
+            }
+        })
+    }
+
+    val imageModifier = if (isImageExpanded) {
+        Modifier
+            .absoluteOffset(x = 0.dp, y = 0.dp)
+            .fillMaxSize()
+            .clickable { isImageExpanded = false }
+    } else {
+        Modifier
+            .clickable { isImageExpanded = true }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (imageState.value != null && isImageExpanded) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f))
+                    .clickable { isImageExpanded = false },
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    bitmap = imageState.value!!.asImageBitmap(),
+                    contentDescription = "Expense Ticket",
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .aspectRatio(1f)
+                )
+            }
+        } else if (imageState.value != null) {
+            Image(
+                bitmap = imageState.value!!.asImageBitmap(),
+                contentDescription = "Expense Ticket",
+                modifier = imageModifier
+            )
+        } else {
+            Button(
+                onClick = {
+                    getContent.launch("image/*")
+                },
+                modifier = Modifier
+                    .padding(16.dp)
+                    .clip(MaterialTheme.shapes.medium),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = MaterialTheme.colors.primary,
+                    contentColor = Color.White
+                )
+            ) {
+                Text(text = "Upload Ticket", style = MaterialTheme.typography.h5)
+            }
+        }
+    }
 }
 
 private fun uploadImage(
@@ -197,103 +266,7 @@ fun getFilePathFromContentUri(uri: Uri, context: Context): String? {
     return filePath
 }
 
-@Composable
-fun ImageOrUploadButton(groupId: Int, expenseId: Int, navController: NavController) {
-
-    val apiService = ApiService.create()
-    val context = LocalContext.current
-    val imageState = remember { mutableStateOf<Bitmap?>(null) }
-    val token = getTokenFromSharedPreferences(context).toString()
-    var isImageExpanded by remember { mutableStateOf(false) }
-
-    val getContent = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null) {
-            val filePath = getFilePathFromContentUri(uri, context)
-            if (filePath != null) {
-                uploadImage(token, groupId, expenseId, Uri.fromFile(File(filePath)), context, navController)
-            }
-        }
-    }
-
-    LaunchedEffect(key1 = token, key2 = groupId, key3 = expenseId) {
-        val call = apiService.viewImage(token, groupId, expenseId)
-        call.enqueue(object : Callback<MessageResponse> {
-            override fun onResponse(call: Call<MessageResponse>, response: Response<MessageResponse>) {
-                val messageResponse = response.body()
-                val fileUrl = messageResponse?.message
-                if (!fileUrl.isNullOrEmpty()) {
-                    loadImageFromUrl(fileUrl,context) { bitmap ->
-                        imageState.value = bitmap
-                    }
-                }
-            }
-            override fun onFailure(call: Call<MessageResponse>, t: Throwable) {
-                val toast =
-                    Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
-                toast.show()
-            }
-        })
-    }
-
-    val imageModifier = if (isImageExpanded) {
-        Modifier
-            .absoluteOffset(x = 0.dp, y = 0.dp)
-            .fillMaxSize()
-            .clickable { isImageExpanded = false }
-    } else {
-        Modifier
-            .clickable { isImageExpanded = true }
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Other content here
-
-        if (imageState.value != null && isImageExpanded) {
-            // Expanded image overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.7f))
-                    .clickable { isImageExpanded = false },
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    bitmap = imageState.value!!.asImageBitmap(),
-                    contentDescription = "Expense Ticket",
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .aspectRatio(1f)
-                )
-            }
-        } else if (imageState.value != null) {
-            // Image preview
-            Image(
-                bitmap = imageState.value!!.asImageBitmap(),
-                contentDescription = "Expense Ticket",
-                modifier = imageModifier
-            )
-        } else {
-        // Image failed to load or is still loading, show upload button
-        Button(
-            onClick = {
-                getContent.launch("image/*")
-            },
-            modifier = Modifier
-                .padding(16.dp)
-                .clip(MaterialTheme.shapes.medium),
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = MaterialTheme.colors.primary,
-                contentColor = Color.White
-            )
-        ) {
-            Text(text = "Upload Ticket", style = MaterialTheme.typography.h5)
-        }
-    }
-    }
-}
-
 private fun loadImageFromUrl(url: String,context: Context, onImageLoaded: (Bitmap) -> Unit) {
-    Log.d("RESPONSE", url)
     val request = ImageRequest.Builder(context)
         .data(url)
         .target { result ->
@@ -302,4 +275,24 @@ private fun loadImageFromUrl(url: String,context: Context, onImageLoaded: (Bitma
         .build()
     val imageLoader = ImageLoader(context)
     imageLoader.enqueue(request)
+}
+
+private fun deleteExpense(navController: NavController, context: Context, expenseId: Int){
+    val apiService = ApiService.create()
+    val token = getTokenFromSharedPreferences(context).toString()
+    val call = apiService.deleteExpense(token,expenseId)
+    call.enqueue(object: Callback<MessageResponse>{
+        override fun onResponse(call: Call<MessageResponse>, response: Response<MessageResponse>) {
+            navController.navigate(AppScreens.ShowExpensesScreen.route) {
+                popUpTo(AppScreens.ShowExpensesScreen.route) {
+                    inclusive = true
+                }
+            }
+        }
+        override fun onFailure(call: Call<MessageResponse>, t: Throwable) {
+            val toast = Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
+            toast.show()
+        }
+
+    })
 }

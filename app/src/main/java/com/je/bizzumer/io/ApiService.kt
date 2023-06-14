@@ -60,7 +60,7 @@ interface ApiService {
         @Query(value= "access_code") accessCode: String,
     ): Call<MessageResponse>
 
-    @POST("api/v1/group/create")
+    @POST("api/v2/group/create")
     fun createGroup(
         @Header("Authorization") token: String,
         @Query(value= "name") name: String,
@@ -110,7 +110,7 @@ interface ApiService {
     ): Call<MessageResponse>
 
     companion object Factory{
-        private const val BASE_URL = "http://192.168.77.21:8000"
+        private const val BASE_URL = "http://192.168.201.21:8000"
         fun create(): ApiService{
             val retrofit = Retrofit.Builder()
                 .baseUrl(BASE_URL)

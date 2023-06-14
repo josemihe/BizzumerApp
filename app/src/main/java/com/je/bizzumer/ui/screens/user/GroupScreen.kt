@@ -3,6 +3,7 @@ package com.je.bizzumer.ui.screens.user
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -23,6 +24,7 @@ import com.je.bizzumer.io.navigation.AppScreens
 import com.je.bizzumer.io.preferences_management.getTokenFromSharedPreferences
 import com.je.bizzumer.io.response.*
 import com.je.bizzumer.model.Group
+import com.je.bizzumer.model.User
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -165,15 +167,19 @@ private fun SingleGroupCard(group: Group, navController: NavController) {
         val context = LocalContext.current
         val groupId = group.id
         val transactionsState = remember { mutableStateOf<List<Transaction>>(emptyList()) }
-
+        val userState = remember { mutableStateOf(User(null,null,null,null,null,null)) }
+        Log.d("PRUEBA",userState.value.toString())
 
         LaunchedEffect(groupId) {
-            getTransactions(groupId, navController, context) { expenses ->
+            getTransactions(groupId, context) { expenses, user ->
                 transactionsState.value = expenses ?: emptyList()
+                userState.value = user
             }
         }
 
         val participantsState = remember { mutableStateListOf(*group.participants.toTypedArray()) }
+        val userId = userState.value.id
+        Log.d("PRUEBA", userId.toString())
 
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -248,39 +254,59 @@ private fun SingleGroupCard(group: Group, navController: NavController) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ){
-                    Text(
-                        text = participant.name,
-                        style = MaterialTheme.typography.h6
-                    )
+                    participant.name?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.h6
+                        )
+                    }
                     if(participant.id != group.ownerId){
-                        Button(
-                            onClick = {
-                                val apiService = ApiService.create()
-                                val token = getTokenFromSharedPreferences(context)
-                                val call = apiService.removeParticipant(token.toString(),group.id,participant.id)
-                                call.enqueue(object : Callback<MessageResponse> {
-                                    override fun onResponse(call: Call<MessageResponse>, response: Response<MessageResponse>) {
-                                        val message = response.body()?.message
-                                        if (response.isSuccessful) {
-                                            if(message.toString() == "Participant successfully removed"){
-                                                participantsState.remove(participant)
+                        if(userId == group.ownerId){
+                            Button(
+                                onClick = {
+                                    val apiService = ApiService.create()
+                                    val token = getTokenFromSharedPreferences(context)
+                                    participant.id?.let {
+                                        apiService.removeParticipant(
+                                            token.toString(), group.id,
+                                            it
+                                        )
+                                    }?.enqueue(object : Callback<MessageResponse> {
+                                        override fun onResponse(
+                                            call: Call<MessageResponse>,
+                                            response: Response<MessageResponse>
+                                        ) {
+                                            val message = response.body()?.message
+                                            if (response.isSuccessful) {
+                                                if (message.toString() == "Participant successfully removed") {
+                                                    participantsState.remove(participant)
+                                                }
+                                            } else {
+                                                val toast =
+                                                    Toast.makeText(context, "Error", Toast.LENGTH_SHORT)
+                                                toast.show()
                                             }
-                                        } else {
-                                            val toast = Toast.makeText(context, "Error", Toast.LENGTH_SHORT)
+                                        }
+
+                                        override fun onFailure(
+                                            call: Call<MessageResponse>,
+                                            t: Throwable
+                                        ) {
+                                            val toast = Toast.makeText(
+                                                context,
+                                                "Network error",
+                                                Toast.LENGTH_SHORT
+                                            )
                                             toast.show()
                                         }
-                                    }
-                                    override fun onFailure(call: Call<MessageResponse>, t: Throwable) {
-                                        val toast = Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
-                                        toast.show()
-                                    }
-                                })
-                            },
-                            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .clip(MaterialTheme.shapes.medium)) {
-                            Text(text = "Remove", color = Color.White)
+                                    })
+                                },
+                                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .clip(MaterialTheme.shapes.medium)) {
+                                Text(text = "Remove", color = Color.White)
+                            }
                         }
                     }
                 }
@@ -289,7 +315,7 @@ private fun SingleGroupCard(group: Group, navController: NavController) {
     }
 }
 
-private fun calculateExpenses(groupId: Int, navController: NavController, context: Context, callback: (List<Transaction>?) -> Unit) {
+private fun calculateExpenses(groupId: Int, context: Context, callback: (List<Transaction>?,User?) -> Unit) {
     val apiService = ApiService.create()
     val token = getTokenFromSharedPreferences(context)
     val call = apiService.calculateExpenses(token.toString(), groupId)
@@ -299,11 +325,12 @@ private fun calculateExpenses(groupId: Int, navController: NavController, contex
             response: Response<ExpenseCalculationResult>
         ) {
             val expenses = response.body()?.transactions
-            callback(expenses ?: emptyList())
+            val user = response.body()?.user
+            callback(expenses ?: emptyList(), user)
         }
 
         override fun onFailure(call: Call<ExpenseCalculationResult>, t: Throwable) {
-            callback(emptyList())
+            callback(emptyList(), null)
         }
     })
 }
@@ -311,12 +338,16 @@ private fun calculateExpenses(groupId: Int, navController: NavController, contex
 
 private fun getTransactions(
     groupId: Int,
-    navController: NavController,
     context: Context,
-    callback: (List<Transaction>?) -> Unit
+    callback: (List<Transaction>?,User) -> Unit
 ) {
-    calculateExpenses(groupId, navController, context) { expenses ->
+    Log.d("BODY","WE ARE HERE")
+    calculateExpenses(groupId, context) { expenses, user ->
         val transactions = expenses ?: emptyList()
-        callback(transactions)
+        Log.d("BODY", transactions.toString())
+        Log.d("USER",user.toString())
+        if (user != null) {
+            callback(transactions,user)
+        }
     }
 }

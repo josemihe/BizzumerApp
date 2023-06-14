@@ -141,14 +141,12 @@ private fun performLogin(context: Context, email: String, password: String,navCo
             else {
                 // Login failed, show an error message
                 val toast = Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT)
-                toast.setGravity(Gravity.TOP, 0, 200)
                 toast.show()
             }
         }
         override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
             // Network or server error, show an error message
             val toast = Toast.makeText(context, "Network error", Toast.LENGTH_SHORT)
-            toast.setGravity(Gravity.TOP, 0, 0)
             toast.show()
         }
     })
